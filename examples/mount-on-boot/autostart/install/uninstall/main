@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo "Uninstalling Autostart"
+
+sudo systemctl stop autostart.service
+sudo systemctl disable autostart.service
+sudo rm /etc/systemd/system/autostart.service

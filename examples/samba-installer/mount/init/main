@@ -1,0 +1,52 @@
+#!/bin/bash
+
+if [ ! -d $ANGL_PATH/mount/path.conf ]; then
+  printf "\n"
+  echo "Create a repository folder. You can also mount a disk into it. The owner of the repo and all it's contents will be set to current user. Be cautious!"
+  echo "Press y to install Repo..."
+  read install_repo
+
+  if [[ "$install_repo" == "y" ]]
+  then
+    echo "Enter the full path to the repo folder, e.g. /full/path/to/repo. If the structure doesn't yet exist, we will make it for you.:"
+    read repo_path
+
+    # If /repo doesn't exist yet, create.
+    if [ ! -d "$repo_path" ];
+    then
+      echo "Creating repo folder $repo_path"
+
+      sudo mkdir -p $repo_path
+    fi
+
+    # If lost+found directory exist, a disk is mounted to $repo_path.
+    # If not, ask user if they want to mount a disk into $repo_path.
+    if [ ! -d "$repo_path/lost+found" ];
+    then
+      printf "\n"
+      echo "Should the the repo be a block device and be mounted (y/n)?"
+      read is_repo_blk
+
+      if [ $is_repo_blk == "y" ];
+      then
+          sudo lsblk
+          echo "Enter only the device name (without the path) to be used to be mounted as repo. "
+          read blkid
+
+          echo "Mounting $repo_path..."
+
+          echo "/dev/$blkid $repo_path    ext4    defaults        0       0" | sudo tee -a /etc/fstab
+          sudo mount /dev/$blkid $repo_path
+      fi
+    fi
+
+    echo "Claim $repo_path for $(whoami)..."
+
+    printf "\n"
+    echo "Press enter to continue..."
+    read
+    sudo chown -R "${USER:=$(/usr/bin/id -run)}:$USER" $repo_path
+
+    echo $repo_path > $ANGL_PATH/mount/path.conf
+  fi
+fi

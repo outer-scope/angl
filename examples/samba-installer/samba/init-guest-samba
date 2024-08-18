@@ -1,0 +1,104 @@
+#!/bin/bash
+
+guest=$1
+
+[[ -z $guest ]] && exit
+
+source $ANGL_PATH/query mount
+
+# If repo path not found, repo isn't installed.
+if [[ $repo_path == "" ]] then
+  echo "Cannot init guest samba due to Repo module not being installed.."
+
+  exit 1
+fi
+
+# Automate repo init?
+echo "Do you want to setup local repo for $guest? y/n:"
+read initrepo
+
+# Init individual repo for this vm
+[[ $initrepo = "n" ]] && exit
+
+echo "Starting..."
+
+# Read vm user
+while :
+do
+  echo "Type the user for this guest, followed by [ENTER]:"
+  read user
+  [[ $user = "" ]] || break
+done
+
+while :
+do
+  # Read user password
+  while :
+  do
+    echo "Type the password for this user, followed by [ENTER]:"
+    read pw
+    [[ $pw = "" ]] || break
+  done
+
+  # Confirm user password
+  while :
+  do
+    echo "Confirm the password for this user, followed by [ENTER]:"
+    read pw2
+    [[ $pw2 = "" ]] || break
+  done
+
+  # If pw != pw2, repeat
+  if [ $pw != $pw2 ];
+  then
+    echo "Both passwords are not the same."
+  else
+    break
+  fi
+done
+
+guest_repo_path="$repo_path/$guest"
+
+# Check if samba is running or installed. If not, exit.
+if sudo systemctl status smbd | grep -q running;
+then
+  # Create non-login user
+  echo "Create non-login user §user"
+  sudo adduser --no-create-home --disabled-password --disabled-login $user
+
+  # Create samba user for that user
+  echo "Create samba user for $user"
+  (echo "$pass"; echo "$pass") | sudo smbpasswd -a -s $user
+
+  # Create repo folder for guest
+  mkdir $guest_repo_path
+
+  # Change /repo into ownership to vm user for samba access
+  echo "Change repo ownership..."
+  sudo chown $user:$user $guest_repo_path
+
+  # Backup samba config
+  echo "Backup samba config"
+  cp /etc/samba/smb.conf $ANGL_PATH/samba/smb.conf.bak
+
+  # Remove existing config, if any.
+  echo "Remove existing config for $user, if any"
+  sudo sed -i "/### $user Config/,/### $user Config/d" /etc/samba/smb.conf
+
+  # Get samba template config for single vm instance
+  echo "Creating samba local repo config for $user"
+  config=`cat $ANGL_PATH/samba/guest-samba-repo.config`
+
+  # Replace all vm_user and vm_name occurences with user
+  config=$(echo $config | sed -e "s/vm_user/$user/g")
+  config=$(echo $config | sed -e "s/vm_name/$guest/g")
+  config=$(echo $config | sed -e "s@REPO_PATH@$guest_repo_path@g")
+
+  # Append config to samba.
+  echo -e $config | sudo tee -a /etc/samba/smb.conf
+
+  # Restart samba.
+  sudo systemctl restart smbd
+fi
+
+echo "finished..."

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+repo_path=$(cat $ANGL_PATH/mount/path.conf)

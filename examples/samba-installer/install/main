@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# We hook all init scripts.
+# This is one way to dispatch pre-hook.
+$ANGL_PATH/dispatch init

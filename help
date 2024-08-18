@@ -1,0 +1,12 @@
+#!/bin/bash
+
+module=$1
+
+# https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script
+ANGL_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+if [ -z "$module" ]; then
+  find $ANGL_PATH/ -name "*.md" -exec cat {} | less
+elif [ -f $ANGL_PATH/$module/README.md ]; then
+  cat $ANGL_PATH/$module/README.md | less
+fi

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for install_assets in $ANGL_PATH/*/install ; do
+  rm -rf $install_assets
+done

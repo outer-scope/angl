@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# This looks like a cheat, but currently this is the only way to pass global enivars for all scripts.
+# TODO: Refactor?
+export $(cat /etc/environment | xargs)
+
+option=
+action=
+
+# https://stackoverflow.com/questions/3465432/how-do-you-write-a-bash-script-function-that-is-dynamic-to-the-parameters-passed
+if [[ "$1" == "--strict" ]] then
+  option=$1
+  shift
+  action=$1
+else
+  action=$1
+fi
+
+shift
+args=$@
+
+[[ -z $action ]] && exit
+
+[[ ! -z $option ]] && [[ `id -u` -ne 0 ]] && echo Please run this script as root or using sudo! && exit
+
+# https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script
+ANGL_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# The idea of dispatch utility is the ability to cascade calls.
+# Shared var is used as communication between actions.
+SHARED_VAR=$SHARED_VAR
+
+# If the action doesn't include a "/", an index is called. 
+[[ $action == *"/"* ]] && exec="$action" || exec="$action/main"
+
+# https://stackoverflow.com/questions/9772036/pass-all-variables-from-one-shell-script-to-another
+# https://stackoverflow.com/questions/10856129/setting-an-environment-variable-before-a-command-in-bash-is-not-working-for-the
+# In the previous implementation, the callee was called like so: SHARED_VAR=$SHARED_VAR $ANGL_PATH/$exec $args
+# But due to the complexity of setting SHARED_VAR from the callee, it is decided to source the callee, eventhough
+# if the dispatch cascades for more than one level:
+# dispatch call calls
+#   dispatch another calls
+#     dispatch another calls,
+# some nasty bug could occur due to vars being global (for example if some vars in some modules have the same name).
+[[ -f $ANGL_PATH/$exec ]] && . $ANGL_PATH/$exec $args
+
+# Search each action for hooked actions and concat actions.
+for hook_exec in $ANGL_PATH/*/$exec ; do
+  [ -f $hook_exec ] && . $hook_exec $args
+done
+
+# https://stackoverflow.com/questions/13767252/how-to-split-path-by-last-slash
+action_path=$(dirname "$exec")
+action_base=$(basename "$exec")
+
+# Resume to main script if resume-$exec exists.
+[[ -f $ANGL_PATH/$action_path/resume-$action_base ]] && . $ANGL_PATH/$action_path/resume-$action_base $args

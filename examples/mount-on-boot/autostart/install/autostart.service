@@ -1,0 +1,13 @@
+[Unit]
+Description=Starts guests as well as scripts on boot AND before libvirt-guests.
+Before=libvirt-guests.service
+
+[Service]
+Type=idle
+User=root
+EnvironmentFile=/etc/environment
+ExecStart=su -c '[autostart_path]/dispatch autostart'
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=libvirt-guests.service

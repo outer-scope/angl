@@ -1,0 +1,11 @@
+#!/bin/bash
+
+module=$1
+# Fun fact: this used to be called "config" and the value would be overwritten due to multiple cascading
+# query usages for which the callee module has the same param name "config".
+param=$2
+
+# https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script
+ANGL_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+source $ANGL_PATH/$module/query $param

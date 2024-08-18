@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# This can also be a pattern: instead of writing install logic here, we put it somewhere else
+# so that it can be called separately.
+# Btw, why do we source the following script? Because we need to pass ANGL_PATH on to it.
+# This script gets ANGL_PATH also because dispatch sources this script.
+. $ANGL_PATH/samba/init-samba

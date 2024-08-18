@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# https://dev.to/victor1890/exploring-the-contrast-helpers-and-utils-demystified-47bo
+
+# https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script
+ANGL_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Only search for helpers in module folders.
+for helpers in $(find $ANGL_PATH/*/ -type f -name "helpers") ; do
+  source $helpers
+done

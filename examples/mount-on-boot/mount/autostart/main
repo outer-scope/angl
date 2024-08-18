@@ -1,0 +1,6 @@
+#!/bin/bash
+
+repo_path=$(cat $ANGL_PATH/mount/path.conf)
+blkid=$(cat $ANGL_PATH/mount/block.conf)
+
+sudo mount /dev/$blkid $repo_path

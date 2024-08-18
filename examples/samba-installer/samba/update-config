@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo cp /etc/samba/smb.conf $VA_PATH/utils/samba/smb.conf.bak
+sudo cp $VA_PATH/utils/samba/smb.conf /etc/samba/smb.conf
+sudo systemctl restart smbd

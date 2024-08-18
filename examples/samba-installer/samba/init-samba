@@ -1,0 +1,77 @@
+#!/bin/bash
+
+source $ANGL_PATH/query mount
+
+if [[ $repo_path == "" ]] then
+  # Run repo module first. If already done, repo creation will be skipped. If cancelled, the rest of this module will be skipped.
+  # We do this extra step, in case samba module is called manually and not from initial install.
+  $ANGL_PATH/dispatch "mount/init/main"
+fi
+
+# Re-source mount to see if repo_path is set.
+source $ANGL_PATH/query mount
+
+# If repo path not found, repo isn't installed.
+if [[ $repo_path == "" ]] then
+  echo "Mount module not found.. Would you like to continue without "
+
+  exit 1
+fi
+
+printf "\n"
+echo "Installing Samba Package..."
+
+sudo apt install samba
+
+samba_path=$repo_path/samba/shared
+
+printf "\n"
+echo "Creating samba directory..."
+
+mkdir -p $samba_path
+
+iam=$(whoami)
+
+# Check if samba is running or installed. If not, exit.
+if systemctl status smbd | grep -q running; 
+then
+  printf "\n"
+  echo "Create shared repo..."
+
+  if [ ! -d "$repo_path/shared" ];
+  then
+    # Create folder
+    mkdir $repo_path/shared
+  fi
+
+  printf "\n"
+  echo "Backup smb.conf..."
+
+  # Backup samba config
+  cp /etc/samba/smb.conf $ANGL_PATH/samba/smb.conf.bak
+
+  printf "\n"
+  echo "Setup host user..."
+
+  # Setup user as samba user, if not already 
+  # sudo pdbedit -L | grep $iam || sudo -S smbpasswd -a -s $iam
+  sudo pdbedit -L | grep $iam || sudo -S smbpasswd -a $iam
+
+  printf "\n"
+  echo "Modify samba config and save..."
+
+  # Remove existing config, if any.
+  sudo sed -i "/### Shared Config/,/### Shared Config/d" /etc/samba/smb.conf
+
+  # Append config to samba.
+  cat $ANGL_PATH/samba/guest-samba-share.config | sudo tee -a /etc/samba/smb.conf
+
+  # Replace USER manually
+  sudo sed -i --expression "s@USER@$iam@g" /etc/samba/smb.conf
+
+  # Replace REPO_PATH manually
+  sudo sed -i --expression "s@SAMBA_PATH@$samba_path@g" /etc/samba/smb.conf
+
+  # Restart samba.
+  sudo systemctl restart smbd
+fi
