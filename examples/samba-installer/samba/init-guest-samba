@@ -7,7 +7,8 @@ guest=$1
 source $ANGL_PATH/query mount
 
 # If repo path not found, repo isn't installed.
-if [[ $repo_path == "" ]] then
+if [[ $repo_path == "" ]]
+then
   echo "Cannot init guest samba due to Repo module not being installed.."
 
   exit 1

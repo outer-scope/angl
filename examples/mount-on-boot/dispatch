@@ -8,7 +8,8 @@ option=
 action=
 
 # https://stackoverflow.com/questions/3465432/how-do-you-write-a-bash-script-function-that-is-dynamic-to-the-parameters-passed
-if [[ "$1" == "--strict" ]] then
+if [[ "$1" == "--strict" ]]
+then
   option=$1
   shift
   action=$1

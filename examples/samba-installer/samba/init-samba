@@ -2,7 +2,8 @@
 
 source $ANGL_PATH/query mount
 
-if [[ $repo_path == "" ]] then
+if [[ $repo_path == "" ]]
+then
   # Run repo module first. If already done, repo creation will be skipped. If cancelled, the rest of this module will be skipped.
   # We do this extra step, in case samba module is called manually and not from initial install.
   $ANGL_PATH/dispatch "mount/init/main"
@@ -12,7 +13,8 @@ fi
 source $ANGL_PATH/query mount
 
 # If repo path not found, repo isn't installed.
-if [[ $repo_path == "" ]] then
+if [[ $repo_path == "" ]]
+then
   echo "Mount module not found.. Would you like to continue without "
 
   exit 1
